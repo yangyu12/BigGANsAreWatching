@@ -71,7 +71,6 @@ class MaskGenerator(nn.Module):
                 z = z + self.z_noise * torch.randn_like(z)
             return z
 
-
     @torch.no_grad()
     def gen_samples(self, z=None, batch_size=None):
         assert (z is None) ^ (batch_size is None), 'one of: z, batch_size should be provided'

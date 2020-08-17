@@ -23,15 +23,15 @@ class UNet(nn.Module):
         self.outc = OutConv(64, out_channels)
 
     def forward(self, x):
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5, x4)
-        x = self.up2(x, x3)
-        x = self.up3(x, x2)
-        x = self.up4(x, x1)
-        logits = self.outc(x)
+        x1 = self.inc(x)     # H   x W
+        x2 = self.down1(x1)  # H/2 x W/2
+        x3 = self.down2(x2)  # H/4 x W/4
+        x4 = self.down3(x3)  # H/8 x W/8
+        x5 = self.down4(x4)  # H/16x W/16
+        x = self.up1(x5, x4) # H/8 x W/8
+        x = self.up2(x, x3)  # H/4 x W/4
+        x = self.up3(x, x2)  # H/2 x W/2
+        x = self.up4(x, x1)  # H   x W
+        logits = self.outc(x)# H   x W
 
         return logits
