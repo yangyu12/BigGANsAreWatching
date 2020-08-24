@@ -16,6 +16,8 @@ from metrics import model_metrics, IoU, accuracy, F_max
 from BigGAN.gan_load import make_big_gan
 from postprocessing import connected_components_filter,\
     SegmentationInference, Threshold
+from utils.utils import to_image
+from visualization import overlayed
 
 DEFAULT_EVAL_KEY = 'id'
 THR_EVAL_KEY = 'thr'
@@ -160,7 +162,8 @@ def train_segmentation(G, bg_direction, model, params, out_dir,
         print('Starting from step {} checkpoint'.format(start_step))
 
     print('start loop', flush=True)
-    for step, (img, ref) in enumerate(it_mask_gen(mask_generator, gen_devices, torch.cuda.current_device())):
+    for step, (img, ref) in enumerate(it_mask_gen(mask_generator, gen_devices,
+            torch.cuda.current_device())):
         step += start_step
         model.zero_grad()
         prediction = model(img.cuda())
@@ -198,6 +201,8 @@ def train_segmentation(G, bg_direction, model, params, out_dir,
                 val_dirs[0], val_dirs[1], (F_max,))
             update_out_json(eval_dict, os.path.join(out_dir, 'score.json'))
             model.train()
+        if step == 0:
+            to_image(overlayed(img[:16], ref[:16].unsqueeze(1)), True).save(f'{out_dir}/gen_sample.png')
         if step == params.n_steps:
             break
 
