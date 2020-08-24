@@ -116,3 +116,27 @@ class SegmentationDataset(Dataset):
     def __getitem__(self, index):
         mask = self.masks_ds[index] >= self.mask_thr
         return (self.images_ds[index], mask[0])
+
+
+class EvalPLDataset(Dataset):
+    def __init__(self, images_root, masks_root, mask_thr=0.5):
+        self.mask_thr = mask_thr
+        images_ds = UnannotatedDataset(images_root, transform=None)
+        masks_ds = UnannotatedDataset(masks_root, transform=None)
+        masks_ds.align_names(images_ds.img_files)
+
+        resize = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(256),
+            transforms.Resize((128, 128)),
+            transforms.ToTensor()])
+        shift_to_zero = lambda x: 2 * x - 1
+        self.images_ds = TransformedDataset(images_ds, transforms.Compose([resize, shift_to_zero]))
+        self.masks_ds = TransformedDataset(masks_ds, resize)
+
+    def __len__(self):
+        return len(self.images_ds)
+
+    def __getitem__(self, index):
+        mask = self.masks_ds[index] >= self.mask_thr
+        return (self.images_ds[index], mask[0])

@@ -134,13 +134,16 @@ def train_segmentation(G, bg_direction, model, params, out_dir,
 
     params.batch_size = params.batch_size // len(gen_devices)
 
+    # build the data generator
     if zs is not None and os.path.isfile(zs):
         zs = torch.from_numpy(np.load(zs))
     mask_postprocessing = gen_postprocessing(params)
     mask_generator = MaskGenerator(
         G, bg_direction, params, [], mask_postprocessing,
-        zs=zs, z_noise=z_noise).cuda().eval()
-    # form test batch
+        zs=zs, z_noise=z_noise
+    ).cuda().eval()
+
+    # form synthetic test batch
     num_test_steps = params.test_samples_count // params.batch_size
     test_samples = [mask_generator() for _ in range(num_test_steps)]
     test_samples = [[s[0].cpu(), s[1].cpu()] for s in test_samples]
@@ -157,7 +160,7 @@ def train_segmentation(G, bg_direction, model, params, out_dir,
         print('Starting from step {} checkpoint'.format(start_step))
 
     print('start loop', flush=True)
-    for step, (img, ref) in enumerate(it_mask_gen(mask_generator, gen_devices, 'cpu')):
+    for step, (img, ref) in enumerate(it_mask_gen(mask_generator, gen_devices, torch.cuda.current_device())):
         step += start_step
         model.zero_grad()
         prediction = model(img.cuda())
@@ -209,7 +212,8 @@ def evaluate_gan_mask_generator(model, G, bg_direction, params,
                                 mask_postprocessing, zs, z_noise, num_steps):
     mask_generator = MaskGenerator(
         G, bg_direction, params, [], mask_postprocessing,
-        zs=zs, z_noise=z_noise).cuda().eval()
+        zs=zs, z_noise=z_noise
+    ).cuda().eval()
     def it():
         while True:
             sample = mask_generator()
